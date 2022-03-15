@@ -80,7 +80,7 @@ class CNNFeatureExtractor:
         laps = []
         for i in range(0, num_channels):
             out = imgs[i]
-            dst = cv2.Laplacian(out, cv2.CV_32F )
+            dst = cv2.Laplacian(out, cv2.CV_32F , 7)
             laps.append(dst)
 
         mag.append(np.linalg.norm(np.abs(laps), axis = 0))
@@ -102,15 +102,15 @@ class CNNFeatureExtractor:
         r = cv2.dilate(r,None)
         for i in range(1, mat1.shape[0]-1):
             for j in range(1, mat1.shape[1]-1):
-                if r[i,j]  > 0.01*np.amax(r) : #if pixel is not on edge
-                    pixel_of_interest = mat2[i,j]
-                    if pixel_of_interest>0.15:
+                #if r[i,j]  > 0.01*np.amax(r) : #if pixel is not on edge
+                pixel_of_interest = mat2[i,j]
+                #if pixel_of_interest>0.15:
 
-                        neighbours = mat2[i-1:i+2, j-1:j+2]
-                        neighbours[1,1] = np.NaN
-                        neighbours_below = mat1[i-1:i+2, j-1:j+2]
-                        if (pixel_of_interest > np.nanmax(neighbours) and pixel_of_interest > np.nanmax(neighbours_below)) or (pixel_of_interest < np.nanmin(neighbours) and pixel_of_interest < np.nanmin(neighbours_below)):
-                            idx.append(np.array([j,i]))
+                neighbours = mat2[i-1:i+2, j-1:j+2]
+                neighbours[1,1] = np.NaN
+                neighbours_below = mat1[i-1:i+2, j-1:j+2]
+                if (pixel_of_interest > np.nanmax(neighbours) and pixel_of_interest > np.nanmax(neighbours_below)) or (pixel_of_interest < np.nanmin(neighbours) and pixel_of_interest < np.nanmin(neighbours_below)):
+                    idx.append(np.array([j,i]))
 
         return np.unique(idx, axis=0)
 
