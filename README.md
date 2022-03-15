@@ -7,3 +7,4 @@
 - [**Spatial localisation of image features**](https://proceedings.neurips.cc/paper/2019/file/ba2f0015122a5955f8b3a50240fb91b2-Paper.pdf)
 - [SIFT exmplained](http://www.ipol.im/pub/art/2014/82/article.pdf)
 - [image matchinv](https://www.isprs.org/proceedings/xxxviii/part3/b/pdf/7_XXXVIII-part3B.pdf)
+- [vgg based keypoint extraction](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8404075)
