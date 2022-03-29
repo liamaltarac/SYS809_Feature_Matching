@@ -1,3 +1,4 @@
+from pprint import pprint
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.vgg16 import decode_predictions
 from tensorflow.keras.applications import VGG16
@@ -25,7 +26,7 @@ from sklearn import preprocessing
 
 from tensorflow.keras.applications.vgg16 import preprocess_input
 from tensorflow.keras.preprocessing import image
-
+from sklearn.decomposition import PCA
 
 class CNNFeatureExtractor:
 
@@ -59,7 +60,7 @@ class CNNFeatureExtractor:
         #print('labels shape',labels.shape)
         return np.array(img)
 
-    def lap_mag(self , channels):
+    '''def lap_mag(self , channels):
         laps = []
         #print(channels.shape)
         for i in range(channels.shape[-1]):
@@ -67,7 +68,7 @@ class CNNFeatureExtractor:
             dst = cv2.Laplacian(channels[:,:,i], cv2.CV_32F , 3)
             laps.append(dst)
         mag = np.linalg.norm(laps, axis = 0)
-        return mag
+        return mag'''
 
     def get_cnn_out(self, input, layer_num):
         get_layer_output = K.function([self.model.input], [l.output for l in self.model.layers][layer_num])
@@ -77,7 +78,7 @@ class CNNFeatureExtractor:
 
 
 
-    def local_arg_max(self, mat, window_size):
+    '''def local_arg_max(self, mat, window_size):
         #Use a moving window to find local max/min in section. Determine coordinate of max pixel in image.
         idx = []
 
@@ -91,9 +92,9 @@ class CNNFeatureExtractor:
                 
                 idx.extend(coords + [i-k, j-k])
 
-        return  np.unique(idx, axis=0)  
+        return  np.unique(idx, axis=0)  '''
 
-    def get_keypoints_and_descriptors(self, image_path):
+    '''def get_keypoints_and_descriptors(self, image_path):
 
         img = self.load_img(image_path, [224,224])
         img_no_proc = self.load_img(image_path, [224,224], preprocess=False)
@@ -126,4 +127,57 @@ class CNNFeatureExtractor:
                 k.append(keypoint)
                 d.append(np.array(layer_output[:, row, col ]).flatten())
 
-        return np.array(k), np.array(d)
+        return np.array(k), np.array(d)'''
+
+    def get_keypoints_and_descriptors(self, image_path):
+
+        img = self.load_img(image_path, [224,224])
+        img_no_proc = self.load_img(image_path, [224,224], preprocess=False)
+        #keypoint_coords = np.array([])
+
+        pool_layers = [3,4]
+
+        layer_pool_1 = np.stack(self.get_cnn_out(img, 3))
+        layer_pool_2 = np.stack(self.get_cnn_out(img, 6)) 
+        layer_pool_3 = np.stack(self.get_cnn_out(img, 10)) 
+        layer_pool_4 = np.stack(self.get_cnn_out(img, 14))
+        layer_pool_5 = np.stack(self.get_cnn_out(img, 18))
+
+        layers = [layer_pool_1,layer_pool_2,layer_pool_3,layer_pool_4,layer_pool_5]
+
+        k=[]
+        d = []
+        kp_desc = dict()
+        #Use a moving window to find local max/min in section. Determine coordinate of max pixel in image.
+        idx = []
+
+        for l in pool_layers:
+            d_temp = []
+            for i in range(0, layers[l-1].shape[0]-1):
+                for j in range(0, layers[l-1].shape[1]-1):
+
+                    #window = img[i-k:i+k+1, j-k:j+k+1]
+                    #coords = np.argwhere(window==window.max())
+                    row = ((i+.5)) * (2**l) 
+                    col = ((j+.5)) * (2**l) 
+                    #d = layers[l-1][ i, j, : ]
+                    keypoint = cv2.KeyPoint()
+                    keypoint.pt = (float(row), float(col))
+                    keypoint.octave = l
+                    keypoint.size = 0
+                    keypoint.response = 0
+                    k.append(keypoint)
+
+                    d_vec = layers[l-1][ i, j, : ].flatten()
+                    d_vec = np.abs(d_vec)
+                    d_vec *= 1.0/d_vec.max()
+                    d.append(d_vec)
+            #print(d[0])
+            #d_temp = np.array(d_temp,  dtype=object)
+            #pca = PCA(n_components=31)
+            #d.extend(d_temp) #pca.fit_transform(d_temp))
+        d = np.array(d, dtype=np.float32)
+        #print(d)
+        #print(d.shape)
+
+        return np.array(k), d
