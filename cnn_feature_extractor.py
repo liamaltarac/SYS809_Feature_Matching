@@ -151,31 +151,42 @@ class CNNFeatureExtractor:
         #Use a moving window to find local max/min in section. Determine coordinate of max pixel in image.
         idx = []
 
-        for l in pool_layers:
-            d_temp = []
-            for i in range(0, layers[l-1].shape[0]-1):
-                for j in range(0, layers[l-1].shape[1]-1):
+        #for l in pool_layers:
+            #d_temp = []
+        for i in range(3, img[0].shape[0]-4, 8):
+            for j in range(3, img[0].shape[1]-4, 8):
+                #window = img[i-k:i+k+1, j-k:j+k+1]
+                #coords = np.argwhere(window==window.max())
+                row = i# ((i+.5)) * (2**l) 
+                col = j #((j+.5)) * (2**l) 
+                #d = layers[l-1][ i, j, : ]
+                keypoint = cv2.KeyPoint()
+                keypoint.pt = (float(col), float(row))
+                keypoint.octave = 0
+                keypoint.size = 0
+                keypoint.response = 0
+                k.append(keypoint)
+                #print(np.floor(i/8), np.floor(j/8))
+                d_vec_3 = layer_pool_3[ int(np.floor(i/8)), int(np.floor(j/8)), : ].flatten()
+                #d_vec_3 = np.abs(d_vec_3)
+                d_vec_3 *= 1/d_vec_3.std()
+                d_vec_3 *= 1.414
+                d_vec_4 = layer_pool_4[ int(np.floor(i/16)), int(np.floor(j/16)), : ].flatten()
+                #d_vec_4 = np.abs(d_vec_4)
+                d_vec_4 *= 1.0/d_vec_4.std()
 
-                    #window = img[i-k:i+k+1, j-k:j+k+1]
-                    #coords = np.argwhere(window==window.max())
-                    row = ((i+.5)) * (2**l) 
-                    col = ((j+.5)) * (2**l) 
-                    #d = layers[l-1][ i, j, : ]
-                    keypoint = cv2.KeyPoint()
-                    keypoint.pt = (float(row), float(col))
-                    keypoint.octave = l
-                    keypoint.size = 0
-                    keypoint.response = 0
-                    k.append(keypoint)
+                d_vec_5 = layer_pool_5[ int(np.floor(i/32)), int(np.floor(j/32)), : ].flatten()
+                #d_vec_5 = np.abs(d_vec_5)
+                d_vec_5 *= 1/d_vec_5.std()
 
-                    d_vec = layers[l-1][ i, j, : ].flatten()
-                    d_vec = np.abs(d_vec)
-                    d_vec *= 1.0/d_vec.max()
-                    d.append(d_vec)
+                d.append(np.concatenate([d_vec_3 , d_vec_4, d_vec_5]))
+                #d[-1] = np.abs(d[-1])
+                #d[-1] *= 1.0/d[-1].max()
+
             #print(d[0])
             #d_temp = np.array(d_temp,  dtype=object)
-            #pca = PCA(n_components=31)
-            #d.extend(d_temp) #pca.fit_transform(d_temp))
+        #pca = PCA(n_components=300)
+        #d = pca.fit_transform(d)
         d = np.array(d, dtype=np.float32)
         #print(d)
         #print(d.shape)
