@@ -179,7 +179,7 @@ class CNNFeatureExtractor:
                 #d_vec_5 = np.abs(d_vec_5)
                 d_vec_5 *= 1/d_vec_5.std()
 
-                d.append(np.concatenate([d_vec_3 , d_vec_4, d_vec_5]))
+                d.append(np.concatenate([d_vec_3, d_vec_4])) #, d_vec_4, d_vec_5]))
                 #d[-1] = np.abs(d[-1])
                 #d[-1] *= 1.0/d[-1].max()
 
