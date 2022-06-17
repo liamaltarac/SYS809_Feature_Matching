@@ -1,4 +1,5 @@
 from pprint import pprint
+import tensorflow as tf
 from tensorflow.keras.preprocessing import image
 from tensorflow.keras.applications.vgg16 import decode_predictions
 from tensorflow.keras.applications import VGG16
@@ -27,6 +28,28 @@ from sklearn import preprocessing
 from tensorflow.keras.applications.vgg16 import preprocess_input
 from tensorflow.keras.preprocessing import image
 from sklearn.decomposition import PCA
+
+def decomp(mat):
+
+    mat = list(mat)
+    sym = []#np.empty(mat.shape[-2:])
+    
+    for m in mat:
+        print('_________')
+        print(type(m))
+        mat_flip_x = np.fliplr(m)
+
+        mat_flip_y = np.flipud(m)
+        mat_flip_xy = np.fliplr(np.flipud(m))
+        sum = m + mat_flip_x + mat_flip_y + mat_flip_xy
+
+        mat_sum_rot_90 = np.rot90(sum)
+        print((sum + mat_sum_rot_90) / 8)
+        #sym = (sum + mat_sum_rot_90) / 8
+        #anti_sym = mat - sym
+        sym.append(((sum + mat_sum_rot_90) / 8))
+
+    return np.array(sym) #, anti_sym
 
 class CNNFeatureExtractor:
 
@@ -132,7 +155,7 @@ class CNNFeatureExtractor:
     def get_keypoints_and_descriptors(self, image_path):
 
         img = self.load_img(image_path, [224,224])
-        img_no_proc = self.load_img(image_path, [224,224], preprocess=False)
+        #img_no_proc = self.load_img(image_path, [224,224], preprocess=False)
         #keypoint_coords = np.array([])
 
         pool_layers = [3,4]
@@ -153,8 +176,10 @@ class CNNFeatureExtractor:
 
         #for l in pool_layers:
             #d_temp = []
-        for i in range(3, img[0].shape[0]-4, 8):
-            for j in range(3, img[0].shape[1]-4, 8):
+        for i in range(2, img[0].shape[0]-2, 4):
+            for j in range(2, img[0].shape[1]-2, 4):
+        #for i in range(2, img[0].shape[0]-2,4 ):
+        #    for j in range(3, img[0].shape[1]-4, 8):
                 #window = img[i-k:i+k+1, j-k:j+k+1]
                 #coords = np.argwhere(window==window.max())
                 row = i# ((i+.5)) * (2**l) 
@@ -167,19 +192,32 @@ class CNNFeatureExtractor:
                 keypoint.response = 0
                 k.append(keypoint)
                 #print(np.floor(i/8), np.floor(j/8))
-                d_vec_3 = layer_pool_3[ int(np.floor(i/8)), int(np.floor(j/8)), : ].flatten()
+                d_vec_2 = decomp(layer_pool_2[ int(np.floor(i/4)), int(np.floor(j/4)), : ]).flatten()
+                d_vec_2 *= 1/d_vec_2.std()
+                d_vec_2 *= 1.5
+
+                d_vec_3 = decomp(layer_pool_3[ int(np.floor(i/8)), int(np.floor(j/8)), : ]).flatten()
                 #d_vec_3 = np.abs(d_vec_3)
                 d_vec_3 *= 1/d_vec_3.std()
-                d_vec_3 *= 1.414
-                d_vec_4 = layer_pool_4[ int(np.floor(i/16)), int(np.floor(j/16)), : ].flatten()
-                #d_vec_4 = np.abs(d_vec_4)
+                #d_vec_3 *= 0.707
+                #d_vec_3 *= 1.4
+
+                d_vec_4 = decomp(layer_pool_4[ int(np.floor(i/16)), int(np.floor(j/16)), : ]).flatten()
                 d_vec_4 *= 1.0/d_vec_4.std()
+                d_vec_4 *= 0.5
 
-                d_vec_5 = layer_pool_5[ int(np.floor(i/32)), int(np.floor(j/32)), : ].flatten()
+                #d_vec_5 = layer_pool_5[ int(np.floor(i/32)), int(np.floor(j/32)), : ].flatten()
                 #d_vec_5 = np.abs(d_vec_5)
-                d_vec_5 *= 1/d_vec_5.std()
+                #d_vec_5 *= 0.707        
+                #d.append(np.concatenate([d_vec_1, d_vec_3,  d_vec_4])) #, d_vec_4, d_vec_5]))
+                #d[-1] = np.abs(d[-1])
+                #d[-1] *= 1.0/d[-1].max()
+              
+                d.append(np.concatenate([d_vec_2, d_vec_3, d_vec_4])) #, d_vec_4, d_vec_5]))
+                #d[-1] = np.abs(d[-1])
+                #d[-1] *= 1.0/d[-1].max()
 
-                d.append(np.concatenate([d_vec_3, d_vec_4])) #, d_vec_4, d_vec_5]))
+                #d.append(np.concatenate([d_vec_1, d_vec_3, d_vec_4])) #, d_vec_4, d_vec_5]))
                 #d[-1] = np.abs(d[-1])
                 #d[-1] *= 1.0/d[-1].max()
 
