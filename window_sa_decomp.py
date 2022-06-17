@@ -1,5 +1,10 @@
 import numpy as np
 import math
+import PIL
+from PIL import Image, ImageOps
+import tensorflow as tf
+
+
 def decomp(mat, k=3):
 
     mat = np.array(mat)
@@ -11,9 +16,10 @@ def decomp(mat, k=3):
         #out = np.empty(mat.shape[-2:])
         temp = np.empty(mat.shape[-2:])
         for i in range(0, m.shape[0], k):
-            for j in range(0, m.shape[1], k):
+            for j in range(0, m.shape[1], k):               
                 w = m[i:i+k, j:j+k]
-                print(w)
+            
+                #print(i,j)
 
                 mat_flip_x = np.fliplr(w)
 
@@ -40,9 +46,20 @@ if __name__ == "__main__":
     [0.742861568	,0.390033226	,0.824093382	,0.45231723	,0.09097642	,0.381456982	,0.965336184],
     [0.789878595	,0.271517016	,0.322960481	,0.460666519,	0.959389661	,0.365591294	,0.692346819]]])
 
-    mat = [np.arange(9*9).reshape([9,9])]
+    mat = [np.arange(16*16).reshape([16,16])]
+
+    im = PIL.Image.open('y2.png')
+    #im     = im.rotate(45)
+    im.save("y_rot.jpeg")
+
+    im = im.resize((240,240))
+    im = ImageOps.grayscale(im)
+
+    mat = [np.asarray(im)]
     #print(mat)
 
     sym= decomp(mat, k=3)
 
-    print(sym)
+    im = Image.fromarray(sym[0])
+    im = im.convert("RGB")
+    im.save("your_file2.jpeg")
