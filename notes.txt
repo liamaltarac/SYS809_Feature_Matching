@@ -1,0 +1,5 @@
+https://stackoverflow.com/questions/41522517/custom-median-pooling-in-tensorflow
+
+https://www.tensorflow.org/api_docs/python/tf/compat/v1/extract_image_patches
+https://www.tensorflow.org/api_docs/python/tf/math/top_k
+https://www.tensorflow.org/api_docs/python/tf/slice
