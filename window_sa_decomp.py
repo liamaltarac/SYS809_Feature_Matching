@@ -48,17 +48,18 @@ if __name__ == "__main__":
 
     mat = [np.arange(16*16).reshape([16,16])]
 
-    im = PIL.Image.open('y2.png')
+    '''im = PIL.Image.open('y2.png')
     #im     = im.rotate(45)
     im.save("y_rot.jpeg")
 
     im = im.resize((240,240))
     im = ImageOps.grayscale(im)
 
-    mat = [np.asarray(im)]
+    mat = [np.asarray(im)]'''
     #print(mat)
 
-    sym= decomp(mat, k=3)
+    sym= decomp(mat, k=8)
+    print(sym)
 
     im = Image.fromarray(sym[0])
     im = im.convert("RGB")
