@@ -17,72 +17,7 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 from tensorflow.compat.v1.keras.backend import set_session
 
 
-def ri_vgg():
-    # Generate the model
-    model = Sequential()
 
-    #BLOCK 1   (in 240)
-    # Layer 1: Convolutional
-    model.add(Conv2D(input_shape=(240, 240, 3), filters=64, kernel_size=(3, 3),
-                    padding='same', activation='relu'))
-    # Layer 2: Convolutional
-    model.add(Conv2D(filters=64, kernel_size=(3,3), padding='same', activation='relu'))
-    # Layer 3: MaxPooling
-    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
-
-
-    # BLOCK 2 (in 120)
-    # Layer 4: Convolutional
-    model.add(Conv2D(filters=128, kernel_size=(3,3), padding='same', activation='relu'))
-    # Layer 5: Convolutional
-    model.add(Conv2D(filters=128, kernel_size=(3,3), padding='same', activation='relu'))
-    # Layer 6: MaxPooling
-    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
-    model.add(SADecompLayer( w_size=8, name='sad2_1'))
-
-    # BLOCK 3 (in 60)
-    # Layer 7: Convolutional
-    model.add(Conv2D(filters=256, kernel_size=(3,3), padding='same', activation='relu'))
-    # Layer 8: Convolutional
-    model.add(Conv2D(filters=256, kernel_size=(3,3), padding='same', activation='relu'))
-    # Layer 9: Convolutional
-    model.add(Conv2D(filters=256, kernel_size=(3,3), padding='same', activation='relu'))
-    # Layer 10: MaxPooling
-    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
-    model.add(SADecompLayer( w_size=3, name='sad3_1'))
-
-    # BLOCK 4 (in 30)
-    # Layer 11: Convolutional
-    model.add(Conv2D(filters=512, kernel_size=(3,3), padding='same', activation='relu'))
-    # Layer 12: Convolutional
-    model.add(Conv2D(filters=512, kernel_size=(3,3), padding='same', activation='relu'))
-    # Layer 13: Convolutional
-    model.add(Conv2D(filters=512, kernel_size=(3,3), padding='same', activation='relu'))
-    # Layer 14: MaxPooling
-    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
-    model.add(SADecompLayer( w_size=3, name='sad4_1'))
-
-
-    # BLOCK 5 (in 15)
-    # Layer 15: Convolutional
-    model.add(Conv2D(filters=512, kernel_size=(3,3), padding='same', activation='relu'))
-    # Layer 16: Convolutional
-    model.add(Conv2D(filters=512, kernel_size=(3,3), padding='same', activation='relu'))
-    # Layer 17: Convolutional
-    model.add(Conv2D(filters=512, kernel_size=(3,3), padding='same', activation='relu'))
-    # Layer 18: MaxPooling
-    model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
-
-    # Layer 19: Flatten
-    model.add(Flatten())
-    # Layer 20: Fully Connected Layer
-    model.add(Dense(units=4096, activation='relu'))
-    # Layer 21: Fully Connected Layer
-    model.add(Dense(units=4096, activation='relu'))
-    # Layer 22: Softmax Layer
-    model.add(Dense(units=256, activation='softmax'))
-
-    return model
 
 if __name__ == "__main__":
 
@@ -92,10 +27,10 @@ if __name__ == "__main__":
     sess = tf.compat.v1.Session(config=config)
     set_session(sess)
 
-    trdata = ImageDataGenerator()
-    traindata = trdata.flow_from_directory(directory="Caltech256/train/",target_size=(240,240))
-    tsdata = ImageDataGenerator()
-    testdata = tsdata.flow_from_directory(directory="Caltech256/val/", target_size=(240,240))
+    trdata = ImageDataGenerator( rescale=1./255)
+    traindata = trdata.flow_from_directory(directory="Caltech256/train/",target_size=(240,240), batch_size=1)
+    tsdata = ImageDataGenerator( rescale=1./255)
+    testdata = tsdata.flow_from_directory(directory="Caltech256/val/", target_size=(240,240), batch_size=1)
     
     print("Got Data")
 
@@ -115,6 +50,8 @@ if __name__ == "__main__":
 
     # Layer 3: MaxPooling
     model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
+    #model.add(SADecompLayer( w_size=4, name='sad1_1'))
+
     print("3")
 
 
@@ -131,7 +68,7 @@ if __name__ == "__main__":
     model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
     print("6")
     
-    model.add(SADecompLayer( w_size=8, name='sad2_1'))
+    #model.add(SADecompLayer( w_size=4, name='sad2_1'))
     print("7")
 
     # BLOCK 3 (in 60)
@@ -143,7 +80,7 @@ if __name__ == "__main__":
     model.add(Conv2D(filters=256, kernel_size=(3,3), padding='same', activation='relu'))
     # Layer 10: MaxPooling
     model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
-    model.add(SADecompLayer( w_size=3, name='sad3_1'))
+    #model.add(SADecompLayer( w_size=3, name='sad3_1'))
 
     # BLOCK 4 (in 30)
     # Layer 11: Convolutional
@@ -154,7 +91,7 @@ if __name__ == "__main__":
     model.add(Conv2D(filters=512, kernel_size=(3,3), padding='same', activation='relu'))
     # Layer 14: MaxPooling
     model.add(MaxPool2D(pool_size=(2, 2), strides=(2, 2)))
-    model.add(SADecompLayer( w_size=3, name='sad4_1'))
+    #model.add(SADecompLayer( w_size=3, name='sad4_1'))
 
 
     # BLOCK 5 (in 15)
@@ -170,9 +107,9 @@ if __name__ == "__main__":
     # Layer 19: Flatten
     model.add(Flatten())
     # Layer 20: Fully Connected Layer
-    model.add(Dense(units=4096, activation='relu'))
+    model.add(Dense(units=4960, activation='relu'))
     # Layer 21: Fully Connected Layer
-    model.add(Dense(units=4096, activation='relu'))
+    model.add(Dense(units=4960, activation='relu'))
     # Layer 22: Softmax Layer
     model.add(Dense(units=256, activation='softmax'))
     
@@ -181,22 +118,22 @@ if __name__ == "__main__":
 
 
     # Add Optimizer
-    optimizer = Adam(learning_rate=0.001)
+    optimizer = Adam(learning_rate=0.05)
     model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=["accuracy"], run_eagerly=True)
     '''model.compile(optimizer=optimizer, loss=keras.losses.categorical_crossentropy,
                 metrics=['accuracy'], run_eagerly=True)'''
     # Check model summary
     print(model.summary())
 
-    checkpoint = ModelCheckpoint("ri_vgg_A_256.h5", monitor='val_acc', 
+    checkpoint = ModelCheckpoint("ri_vgg_A_256.h5", monitor='val_accuracy', 
                              verbose=2, save_best_only=True, 
                              save_weights_only=False, mode='auto', period=1)
 
-    earlystop = EarlyStopping(monitor='val_acc', min_delta=0, patience=20, verbose=2, mode='auto')
+    earlystop = EarlyStopping(monitor='val_accuracy', min_delta=0, patience=20, verbose=2, mode='auto')
     print("HERE")
     hist = model.fit_generator(steps_per_epoch=100, generator=traindata, validation_data=testdata,
                            validation_steps=10, epochs=100,
-                           callbacks=[checkpoint, earlystop], verbose=2)
+                           callbacks=[earlystop], verbose=2)
 
 
     plt.plot(hist.history["acc"])
