@@ -30,7 +30,7 @@ class SADecompLayer(Layer):
         mat_flip_y = flip_up_down(patches)
         mat_flip_xy = flip_left_right(flip_up_down(patches))
         sum = patches + mat_flip_x + mat_flip_y + mat_flip_xy
-
+        
         mat_sum_rot_90 = rot90(sum)
         #gc.collect()
         #print("mat_sum_rot_90 shape " , mat_sum_rot_90.shape, self._name)
