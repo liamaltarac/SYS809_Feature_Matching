@@ -17,13 +17,14 @@ class SADecompLayer(Layer):
     @tf.function
     def call(self, inputs):
         inputs_shape = tf.shape(inputs)  
+        print("Input shape : ", inputs_shape)
         
         batch_size, height, width, n_filters = inputs_shape[0], inputs_shape[1], inputs_shape[2], inputs_shape[3]
 
         exp_data  = tf.expand_dims(inputs[0], 0)
 
 
-        patches = extract_image_patches(inputs, [1, self.k, self.k, 1],  [1, self.k, self.k, 1], rates = [1,1,1,1] , padding = 'VALID')
+        patches = self.extract_patches(inputs) #, [1, self.k, self.k, 1],  [1, self.k, self.k, 1], rates = [1,1,1,1] , padding = 'VALID')
         #print(patches)
         mat_flip_x = flip_left_right(patches)
 
@@ -36,10 +37,20 @@ class SADecompLayer(Layer):
         #print("mat_sum_rot_90 shape " , mat_sum_rot_90.shape, self._name)
         
         #print("OUT SHAPE," , out.shape)
-        return  tf.reshape((sum + mat_sum_rot_90) / 8, (batch_size, height, width, n_filters))
+        out = (sum + mat_sum_rot_90) / 8,
+        return  self.extract_patches_inverse(inputs, out) # tf.reshape((sum + mat_sum_rot_90) / 8, (batch_size, height, width, n_filters))
 
 
+    def extract_patches(self, x):
+        return extract_image_patches(x, [1, self.k, self.k, 1],  [1, 1, 1, 1], rates = [1,1,1,1] , padding = 'VALID')
 
+    def extract_patches_inverse(self, x, y):
+        _x = tf.zeros_like(x)
+        _y = self.extract_patches(_x)
+        grad = tf.gradients(_y, _x)[0]
+        # Divide by grad, to "average" together the overlapping patches
+        # otherwise they would simply sum up
+        return tf.gradients(_y, _x, grad_ys=y)[0] / grad
 
 if __name__ == "__main__":
     model = Sequential()
