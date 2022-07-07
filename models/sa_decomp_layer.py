@@ -19,7 +19,7 @@ class SADecompLayer(Layer):
         inputs_shape = tf.shape(inputs)  
         print("Input shape : ", inputs_shape)
         
-        batch_size, height, width, n_filters = inputs_shape[0], inputs_shape[1], inputs_shape[2], inputs_shape[3]
+        #batch_size, height, width, n_filters = inputs_shape[0], inputs_shape[1], inputs_shape[2], inputs_shape[3]
 
         exp_data  = tf.expand_dims(inputs[0], 0)
 
@@ -42,8 +42,9 @@ class SADecompLayer(Layer):
 
 
     def extract_patches(self, x):
-        return extract_image_patches(x, [1, self.k, self.k, 1],  [1, 1, 1, 1], rates = [1,1,1,1] , padding = 'VALID')
+        return extract_image_patches(x, [1, self.k, self.k, 1],  [1, self.k, self.k , 1], rates = [1,1,1,1] , padding = 'VALID')
 
+    # Thanks to https://stackoverflow.com/questions/44047753/reconstructing-an-image-after-using-extract-image-patches
     def extract_patches_inverse(self, x, y):
         _x = tf.zeros_like(x)
         _y = self.extract_patches(_x)
