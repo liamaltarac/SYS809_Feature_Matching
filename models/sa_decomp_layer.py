@@ -7,25 +7,37 @@ import numpy as np
 
 from keras.layers import Conv2D, Dense, Flatten, MaxPool2D
 from keras.models import Sequential, load_model
+
+import matplotlib.pyplot as plt
+
+
 import gc
 class SADecompLayer(Layer):
     def __init__(self, w_size=8,  **kwargs):
         super(SADecompLayer, self).__init__( **kwargs)
         self.k = w_size
-
     
     @tf.function
     def call(self, inputs):
         inputs_shape = tf.shape(inputs)  
-        print("Input shape : ", inputs_shape)
-        
+
+        print("Input shape : ", inputs.shape)
+        print("k", self.k)
+
         #batch_size, height, width, n_filters = inputs_shape[0], inputs_shape[1], inputs_shape[2], inputs_shape[3]
 
-        exp_data  = tf.expand_dims(inputs[0], 0)
+        #exp_data  = tf.expand_dims(inputs[0], 0)
 
 
         patches = self.extract_patches(inputs) #, [1, self.k, self.k, 1],  [1, self.k, self.k, 1], rates = [1,1,1,1] , padding = 'VALID')
-        #print(patches)
+        #patches = tf.reshape(patches, [1, self.k , self.k, 1])
+        
+        
+        print("PS : ", patches.shape)
+        '''for patch in patches:
+            print(patch.shape)
+            plt.figure()
+            plt.imshow(patch)'''
         mat_flip_x = flip_left_right(patches)
 
         mat_flip_y = flip_up_down(patches)
@@ -37,13 +49,15 @@ class SADecompLayer(Layer):
         #print("mat_sum_rot_90 shape " , mat_sum_rot_90.shape, self._name)
         
         #print("OUT SHAPE," , out.shape)
-        out = (sum + mat_sum_rot_90) / 8,
-        return  self.extract_patches_inverse(inputs, out) # tf.reshape((sum + mat_sum_rot_90) / 8, (batch_size, height, width, n_filters))
+        out = (sum + mat_sum_rot_90) / 8
+        sym = self.extract_patches_inverse(inputs, out)
+        anti = inputs - sym
+        return  tf.concat([sym, anti], -1) #, inputs - sym # tf.reshape((sum + mat_sum_rot_90) / 8, (batch_size, height, width, n_filters))
 
 
     def extract_patches(self, x):
-        return extract_image_patches(x, [1, self.k, self.k, 1],  [1, self.k, self.k , 1], rates = [1,1,1,1] , padding = 'VALID')
-
+        patches =  extract_image_patches(x, [1, self.k, self.k, 1],  [1, self.k, self.k, 1],  rates = [1,1,1,1] , padding = 'SAME')
+        return tf.reshape(patches, [-1, self.k, self.k, x.shape[-1]])
     # Thanks to https://stackoverflow.com/questions/44047753/reconstructing-an-image-after-using-extract-image-patches
     def extract_patches_inverse(self, x, y):
         _x = tf.zeros_like(x)
