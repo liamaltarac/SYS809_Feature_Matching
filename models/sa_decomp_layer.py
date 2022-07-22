@@ -52,7 +52,7 @@ class SADecompLayer(Layer):
         
         #print("OUT SHAPE," , out.shape)
         out = (sum + mat_sum_rot_90) / 8
-        out, _ = normalize(out)
+        
         sym = self.extract_patches_inverse(inputs, out)
         anti = inputs - sym
         return  sym, anti #tf.concat([sym, anti], -1) #, inputs - sym # tf.reshape((sum + mat_sum_rot_90) / 8, (batch_size, height, width, n_filters))
