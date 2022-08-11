@@ -5,6 +5,7 @@
 # Install mayavi and vtk from https://www.lfd.uci.edu/~gohlke/pythonlibs/#vtk
 # pip install "wheels package"
 
+from msilib.schema import Error
 import numpy as np
 from scipy import ndimage
 
@@ -32,6 +33,8 @@ from tensorflow.keras.applications import VGG16
 
 from mayavi  import mlab 
 
+LAYER = 1
+
 
 RGB = ['R','G','B']
 
@@ -44,9 +47,10 @@ def get_filter(layer):
 
     # check for convolutional layer
     if 'conv' not in layer.name:
-        return None
+        raise ValueError('Layer must be a conv. layer')
     # get filter weights
     filters, biases = layer.get_weights()
+    print("biases shzpe : ", biases.shape)
     return (filters)
     #print(layer.name, filters.shape)
 
@@ -83,10 +87,15 @@ def normalizeToOne(mat):
 def NormalizeData(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))
 
+def spec(N):                                             
+    t = np.linspace(-510, 510, N)                                              
+    return  tuple(map(tuple,np.clip(np.stack([-t, 510-np.abs(t), t], axis=1), 0, 1)))
 
 
-filters = get_filter(1)
+print("starting")
 
+filters = get_filter(LAYER)
+print("Got filters")
 fig = mlab.figure(1)
 mlab.clf()
 
@@ -111,12 +120,14 @@ zdata = np.array([])
 xdata = np.array([])
 ydata = np.array([])
 
-glyphs = []
+glyphs = dict()
+
 
 num_filters = filters.shape[-1]
 num_channels = filters[:,:,:, 0].shape[-1]
+c = np.linspace(0, 255, 256)
 for i in range(num_channels):  # Each channel (ex R G B)
-
+    print("i = ", i)
     z = np.array([])
     x = np.array([])
     y = np.array([])
@@ -127,12 +138,14 @@ for i in range(num_channels):  # Each channel (ex R G B)
 
 
     for j in range(num_filters): #each filter in that channel
+
+        print(j)
         f = filters[:,:,:, j]
         f = f[:,:, i]  
 
         sym, anti = getSymAntiSym(normalizeToOne(f))
-        sym_mag = np.linalg.norm(sym)
-        anti_mag = np.linalg.norm(anti)
+        sym_mag = np.linalg.norm(sym) 
+        anti_mag = np.linalg.norm(anti) 
 
         theta = getSobelAngle(f)
         theta = theta[theta.shape[0]//2, theta.shape[1]//2]
@@ -145,12 +158,14 @@ for i in range(num_channels):  # Each channel (ex R G B)
         filter_list[i].append(f)
         sym_list[i].append(sym)
         anti_list[i].append(anti)
-    glyphs.append(mlab.points3d(x, y, z,  color = tuple(np.eye(num_channels)[i].astype(int)), scale_factor=.1))
+    
+    glyphs[i] = mlab.points3d(x, y, z,  color = spec(num_channels)[i], scale_factor=.1)
+
     zdata = np.append(zdata, z)
     ydata = np.append(ydata, y)
     xdata = np.append(xdata, x)
 
-    glyph_points = glyphs[-1].glyph.glyph_source.glyph_source.output.points.to_array()
+    glyph_points = glyphs[i].glyph.glyph_source.glyph_source.output.points.to_array()
 
 print(xdata.shape,ydata.shape,zdata.shape )
 
@@ -173,7 +188,7 @@ Display Functions
 def picker_callback(picker_obj):
     fig, ax = plt.subplots(ncols=3)
 
-    for n, g in enumerate(glyphs):
+    for n, g in glyphs.items():
         if picker_obj.actor in g.actor.actors :
 
             # m.mlab_source.points is the points array underlying the vtk
@@ -187,13 +202,15 @@ def picker_callback(picker_obj):
                 x, y, z = xdata[point_id], ydata[point_id], zdata[point_id]
                 #print(x,y,z, type(point_id), point_id, filter_list.shape)
 
-                f = filter_list[n][point_id]
-                sym = sym_list[n][point_id]
-                anti_sym = anti_list[n][point_id]
+                f = filter_list.get(n)[point_id]
+                sym = sym_list.get(n)[point_id]
+                anti_sym = anti_list.get(n)[point_id]
 
-                ax[0].imshow(f, cmap=plt.get_cmap('gray')) 
-                ax[0].set_title('Filter : {} , Chanel : {}'.format(point_id, RGB[n]))
-    
+                ax[0].imshow(f, cmap=plt.get_cmap('gray'))
+                if LAYER == 1: 
+                    ax[0].set_title('Filter : {} , Chanel : {}'.format(point_id, RGB[n]))
+                else:
+                    ax[0].set_title('Filter : {} , Chanel : {}'.format(point_id, n))
                 ax[1].imshow(sym, cmap=plt.get_cmap('gray')) 
                 ax[2].imshow(anti_sym, cmap=plt.get_cmap('gray')) 
                 fig.show()
