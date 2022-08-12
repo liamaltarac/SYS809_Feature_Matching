@@ -6,6 +6,7 @@
 # pip install "wheels package"
 
 from msilib.schema import Error
+from turtle import color
 import numpy as np
 from scipy import ndimage
 
@@ -84,6 +85,10 @@ def normalizeToOne(mat):
     return mat/np.linalg.norm(mat)
 
 
+# https://www.arduino.cc/reference/en/language/functions/math/map/
+def mapToRange(x, min_out, max_out):
+    return (x - np.min(x)) * (max_out- min_out) / (np.max(x) - np.min(x)) + min_out
+
 def NormalizeData(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))
 
@@ -104,7 +109,7 @@ lensoffset = 0
 xx = yy = zz = np.arange(-1.5,1.5,0.1)
 xy = xz = yx = yz = zx = zy = np.zeros_like(xx)    
 mlab.plot3d(yx,yy+lensoffset,yz,line_width=0.01,tube_radius=0.01)
-mlab.plot3d(zx,zy+lensoffset,zz,line_width=0.01,tube_radius=0.01)
+mlab.plot3d(zx,zy+lensoffset,zz,line_width=0.01,tube_radius=0.01, color=(1,0,0))
 mlab.plot3d(xx,xy+lensoffset,xz,line_width=0.01,tube_radius=0.01)
 
 cursor3d = mlab.points3d(0., 0., 0., mode='axes',
@@ -120,28 +125,31 @@ zdata = np.array([])
 xdata = np.array([])
 ydata = np.array([])
 
-glyphs = dict()
-
+s_list = np.array([])
 
 num_filters = filters.shape[-1]
 num_channels = filters[:,:,:, 0].shape[-1]
 c = np.linspace(0, 255, 256)
-for i in range(num_channels):  # Each channel (ex R G B)
-    print("i = ", i)
-    z = np.array([])
-    x = np.array([])
-    y = np.array([])
+
+fig.scene.disable_render = True 
+for i in range(num_filters):  # each filter in that channel 
+    #print("i = ", i)
+
+    s = np.array([])
+    a = np.array([])
+    t = np.array([])
 
     filter_list[i] = []
     sym_list[i] = []
     anti_list[i] = []
 
 
-    for j in range(num_filters): #each filter in that channel
+    for j in range(num_channels): # Each channel (ex R G B)
+    
 
-        print(j)
-        f = filters[:,:,:, j]
-        f = f[:,:, i]  
+        #print(j)
+        f = filters[:,:,:, i]
+        f = f[:,:, j]  
 
         sym, anti = getSymAntiSym(normalizeToOne(f))
         sym_mag = np.linalg.norm(sym) 
@@ -151,21 +159,35 @@ for i in range(num_channels):  # Each channel (ex R G B)
         theta = theta[theta.shape[0]//2, theta.shape[1]//2]
 
         # Data for three-dimensional scattered points
-        z = np.append(z, sym_mag)
-        y = np.append(y, anti_mag*np.sin(theta))
-        x = np.append(x, anti_mag*np.cos(theta) )
+        s = np.append(s, sym_mag)
+        a = np.append(a, anti_mag)
+        t = np.append(t, theta )
 
         filter_list[i].append(f)
         sym_list[i].append(sym)
         anti_list[i].append(anti)
-    
-    glyphs[i] = mlab.points3d(x, y, z,  color = spec(num_channels)[i], scale_factor=.1)
 
-    zdata = np.append(zdata, z)
-    ydata = np.append(ydata, y)
-    xdata = np.append(xdata, x)
+        
+    cov = np.cov(np.array([s,a, t]))
+    size = np.trace(cov)
+    s_list = np.append(s_list, size)
 
-    glyph_points = glyphs[i].glyph.glyph_source.glyph_source.output.points.to_array()
+    zdata = np.append(zdata, 3*np.mean(s))
+    ydata = np.append(ydata, np.mean(a)*np.sin(np.mean(t)))
+    xdata = np.append(xdata, np.mean(a)*np.cos(np.mean(t)))
+
+
+
+s_list = mapToRange(s_list, 0.1, 1)
+glyphs = []
+glyph_points = []
+
+glyphs = mlab.points3d(xdata, ydata, zdata, s_list,  color = (0.20,0.8,0.5), scale_factor=0.5)
+
+focus = 0
+glyphs_red = mlab.points3d(xdata[focus], ydata[focus], zdata[focus], s_list[focus],  color = (1,0,0), scale_factor=1.1  )
+
+    #glyph_points = glyphs.glyph.glyph_source.glyph_source.output.points.to_array()
 
 print(xdata.shape,ydata.shape,zdata.shape )
 
@@ -187,34 +209,39 @@ Display Functions
 '''
 #https://docs.enthought.com/mayavi/mayavi/auto/example_select_red_balls.html
 def picker_callback(picker_obj):
-    fig, ax = plt.subplots(ncols=3)
 
-    for n, g in glyphs.items():
-        if picker_obj.actor in g.actor.actors :
+    fig, ax = plt.subplots(3,3)
 
-            # m.mlab_source.points is the points array underlying the vtk
-            # dataset. GetPointId return the index in this array.
-            point_id = picker_obj.point_id//glyph_points.shape[0]
-                                                                
-            # If the no points have been selected, we have '-1'
-            if point_id != -1:
-                # Retrieve the coordinates coorresponding to that data
-                # point
-                x, y, z = xdata[point_id], ydata[point_id], zdata[point_id]
-                #print(x,y,z, type(point_id), point_id, filter_list.shape)
+    if picker_obj.actor in glyphs.actor.actors or picker_obj.actor in glyphs_red.actor.actors :
 
-                f = filter_list.get(n)[point_id]
-                sym = sym_list.get(n)[point_id]
-                anti_sym = anti_list.get(n)[point_id]
+        # m.mlab_source.points is the points array underlying the vtk
+        # dataset. GetPointId return the index in this array.
+        point_id = picker_obj.point_id//num_filters
+                                                            
+        # If the no points have been selected, we have '-1'
+        if point_id != -1:
+            # Retrieve the coordinates coorresponding to that data
+            # point
+            x, y, z = xdata[point_id], ydata[point_id], zdata[point_id]
+            #print(x,y,z, type(point_id), point_id, filter_list.shape)
 
-                ax[0].imshow(f, cmap=plt.get_cmap('gray'))
-                if LAYER == 1: 
-                    ax[0].set_title('Filter : {} , Chanel : {}'.format(point_id, RGB[n]))
-                else:
-                    ax[0].set_title('Filter : {} , Chanel : {}'.format(point_id, n))
-                ax[1].imshow(sym, cmap=plt.get_cmap('gray')) 
-                ax[2].imshow(anti_sym, cmap=plt.get_cmap('gray')) 
-                fig.show()
+            f = filter_list[point_id]
+            sym = sym_list[point_id]
+            anti_sym = anti_list[point_id]
+
+            for i in range(num_channels):
+
+
+                ax[0,i].imshow(f[i], cmap=plt.get_cmap('gray') )
+                ax[0,i].set_title('Filter : {} , Chanel : {}'.format(point_id, RGB[i]))
+
+                ax[1,i].imshow(sym[i], cmap=plt.get_cmap('gray') )
+                ax[1,i].set_title('Filter Sym Component: {} , Chanel : {} ({})'.format(point_id, RGB[i], np.linalg.norm(sym[i])))
+
+                ax[2,i].imshow(anti_sym[i], cmap=plt.get_cmap('gray') )
+                ax[2,i].set_title('Filter AntiSym Component: {} , Chanel : {} ({})'.format(point_id, RGB[i], np.linalg.norm(anti_sym[i])))
+
+            fig.show()
 
 
 picker = fig.on_mouse_pick(picker_callback)
@@ -223,4 +250,6 @@ picker = fig.on_mouse_pick(picker_callback)
 # point.
 picker.tolerance = 0.01
 
+fig.scene.disable_render = False 
 mlab.show()
+
