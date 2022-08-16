@@ -34,7 +34,7 @@ from tensorflow.keras.applications import VGG16
 
 from mayavi  import mlab 
 
-LAYER = 1
+LAYER = 15
 
 
 RGB = ['R','G','B']
@@ -104,17 +104,7 @@ print("Got filters")
 fig = mlab.figure(1)
 mlab.clf()
 
-#https://stackoverflow.com/questions/24308049/how-to-plot-proper-3d-axes-in-mayavi-like-those-found-in-matplotlib
-lensoffset = 0
-xx = yy = zz = np.arange(-1.5,1.5,0.1)
-xy = xz = yx = yz = zx = zy = np.zeros_like(xx)    
-mlab.plot3d(yx,yy+lensoffset,yz,line_width=0.01,tube_radius=0.01)
-mlab.plot3d(zx,zy+lensoffset,zz,line_width=0.01,tube_radius=0.01, color=(1,0,0))
-mlab.plot3d(xx,xy+lensoffset,xz,line_width=0.01,tube_radius=0.01)
 
-cursor3d = mlab.points3d(0., 0., 0., mode='axes',
-                                color=(0, 0, 0),
-                                scale_factor=0.5)
 
 
 filter_list = dict()
@@ -131,13 +121,16 @@ num_filters = filters.shape[-1]
 num_channels = filters[:,:,:, 0].shape[-1]
 c = np.linspace(0, 255, 256)
 
+
+s = np.array([])
+a = np.array([])
+t = np.array([])
+
 fig.scene.disable_render = True 
-for i in range(num_filters):  # each filter in that channel 
+for i in range(30,31):  # each filter in that channel 
     #print("i = ", i)
 
-    s = np.array([])
-    a = np.array([])
-    t = np.array([])
+
 
     filter_list[i] = []
     sym_list[i] = []
@@ -159,40 +152,47 @@ for i in range(num_filters):  # each filter in that channel
         theta = theta[theta.shape[0]//2, theta.shape[1]//2]
 
         # Data for three-dimensional scattered points
-        s = np.append(s, sym_mag)
-        a = np.append(a, anti_mag)
-        t = np.append(t, theta)
+        zdata = np.append(zdata, sym_mag)
+        ydata = np.append(ydata, anti_mag*np.sin(theta))
+        xdata = np.append(xdata, anti_mag*np.cos(theta))
+
 
         filter_list[i].append(f)
         sym_list[i].append(sym)
         anti_list[i].append(anti)
 
-        
-    cov = np.cov(np.array([s,a, t]))
-    size = np.trace(cov)
-    s_list = np.append(s_list, size)
-
-    zdata = np.append(zdata, np.mean(s))
-    ydata = np.append(ydata, np.mean(a)*np.sin(np.mean(t)))
-    xdata = np.append(xdata, np.mean(a)*np.cos(np.mean(t)))
 
 
 
-s_list = NormalizeData(s_list)+0.1
-indices = [i for i, x in enumerate(s_list) if x > 0.2]
-print(indices)
+
+
 ###print(s_list[s_list>0.2])
 #print(xdata[s_list>0.5], ydata[s_list>0.5], zdata[s_list>0.5])
 
 glyphs = []
 glyph_points = []
 
-glyphs = mlab.points3d(xdata, ydata, zdata, s_list,  color = (0.20,0.8,0.5), scale_factor=1)
+glyphs = mlab.points3d(xdata, ydata, zdata, color = (0.20,0.8,0.5), scale_factor=0.003)
 
-focus = 0
-glyphs_red = mlab.points3d(xdata[focus], ydata[focus], zdata[focus], s_list[focus],  color = (1,0,0), scale_factor=1.1  )
+#https://stackoverflow.com/questions/24308049/how-to-plot-proper-3d-axes-in-mayavi-like-those-found-in-matplotlib
+lensoffset = 0
+'''xx  = np.arange(np.min(xdata),np.max(xdata),0.01)
+yy = np.arange(np.min(ydata),np.max(ydata),0.01)
+zz = np.arange(np.min(zdata),np.max(zdata),0.01)
 
-    #glyph_points = glyphs.glyph.glyph_source.glyph_source.output.points.to_array()
+xy = xz = np.zeros_like(xx)    
+yx = yz = np.zeros_like(yy)    
+zx = zy = np.zeros_like(zz)    
+mlab.plot3d(yx,yy+lensoffset,yz,line_width=0.001,tube_radius=0.001, color=(1,0,0))
+mlab.plot3d(zx,zy+lensoffset,zz,line_width=0.001,tube_radius=0.001, color=(1,0,0))
+mlab.plot3d(xx,xy+lensoffset,xz,line_width=0.001,tube_radius=0.001, color=(1,0,0))'''
+
+cursor3d = mlab.points3d(0., 0., 0., mode='axes',
+                                color=(0, 0, 0),
+                                scale_factor=0.5)
+
+
+#glyph_points = glyphs.glyph.glyph_source.glyph_source.output.points.to_array()
 
 print(xdata.shape,ydata.shape,zdata.shape )
 
