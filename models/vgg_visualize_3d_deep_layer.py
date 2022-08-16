@@ -34,8 +34,8 @@ from tensorflow.keras.applications import VGG16
 
 from mayavi  import mlab 
 
-LAYER = 15
-
+LAYER =17
+FILTER = 400
 
 RGB = ['R','G','B']
 
@@ -105,12 +105,6 @@ fig = mlab.figure(1)
 mlab.clf()
 
 
-
-
-filter_list = dict()
-sym_list = dict()
-anti_list = dict()
-
 zdata = np.array([])
 xdata = np.array([])
 ydata = np.array([])
@@ -127,15 +121,12 @@ a = np.array([])
 t = np.array([])
 
 fig.scene.disable_render = True 
-for i in range(30,31):  # each filter in that channel 
+for i in range(FILTER, FILTER+1):  # each filter in that channel 
     #print("i = ", i)
 
-
-
-    filter_list[i] = []
-    sym_list[i] = []
-    anti_list[i] = []
-
+    filter_list = []
+    sym_list = []
+    anti_list  = []
 
     for j in range(num_channels): # Each channel (ex R G B)
     
@@ -157,9 +148,9 @@ for i in range(30,31):  # each filter in that channel
         xdata = np.append(xdata, anti_mag*np.cos(theta))
 
 
-        filter_list[i].append(f)
-        sym_list[i].append(sym)
-        anti_list[i].append(anti)
+        filter_list.append(f)
+        sym_list.append(sym)
+        anti_list.append(anti)
 
 
 
@@ -215,7 +206,7 @@ Display Functions
 #https://docs.enthought.com/mayavi/mayavi/auto/example_select_red_balls.html
 def picker_callback(picker_obj):
 
-    fig, ax = plt.subplots(3,3)
+    fig, ax = plt.subplots(1,3)
 
     if picker_obj.actor in glyphs.actor.actors or picker_obj.actor in glyphs_red.actor.actors :
 
@@ -234,17 +225,16 @@ def picker_callback(picker_obj):
             sym = sym_list[point_id]
             anti_sym = anti_list[point_id]
 
-            for i in range(num_channels):
 
 
-                ax[0,i].imshow(f[i], cmap=plt.get_cmap('gray') )
-                ax[0,i].set_title('Filter : {} , Chanel : {}'.format(point_id, RGB[i]))
+            ax[0].imshow(f, cmap=plt.get_cmap('gray') )
+            ax[0].set_title('Chanel : {}'.format(point_id))
 
-                ax[1,i].imshow(sym[i], cmap=plt.get_cmap('gray') )
-                ax[1,i].set_title('Filter Sym Component: {} , Chanel : {} ({:5.3f})'.format(point_id, RGB[i], np.linalg.norm(sym[i])))
+            ax[1].imshow(sym, cmap=plt.get_cmap('gray') )
+            ax[1].set_title('Chanel : {} ({:5.3f})'.format(point_id, np.linalg.norm(sym)))
 
-                ax[2,i].imshow(anti_sym[i], cmap=plt.get_cmap('gray') )
-                ax[2,i].set_title('Filter AntiSym Component: {} , Chanel : {} ({:5.3f})'.format(point_id, RGB[i], np.linalg.norm(anti_sym[i])))
+            ax[2].imshow(anti_sym, cmap=plt.get_cmap('gray') )
+            ax[2].set_title('Chanel : {} ({:5.3f})'.format(point_id, np.linalg.norm(anti_sym)))
 
             fig.show()
 
