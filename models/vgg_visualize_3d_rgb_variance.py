@@ -151,7 +151,7 @@ for i in range(num_filters):  # each filter in that channel
         f = filters[:,:,:, i]
         f = f[:,:, j]  
 
-        sym, anti = getSymAntiSym(f)
+        sym, anti = getSymAntiSym(NormalizeData(f))
         sym_mag = np.linalg.norm(sym) 
         anti_mag = np.linalg.norm(anti) 
 
@@ -167,7 +167,7 @@ for i in range(num_filters):  # each filter in that channel
         sym_list[i].append(sym)
         anti_list[i].append(anti)
 
-        
+    # https://en.wikipedia.org/wiki/Variance#For_vector-valued_random_variables    
     cov = np.cov(np.array([s,a, t]))
     size = np.trace(cov)
     s_list = np.append(s_list, size)
