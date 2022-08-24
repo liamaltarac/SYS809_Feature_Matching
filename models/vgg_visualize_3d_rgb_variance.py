@@ -169,7 +169,7 @@ for i in range(num_filters):  # each filter in that channel
 
     # https://en.wikipedia.org/wiki/Variance#For_vector-valued_random_variables    
     cov = np.cov(np.array([s,a, t]))
-    size = np.trace(cov)
+    size = np.linalg.det(cov)
     s_list = np.append(s_list, size)
 
     zdata = np.append(zdata, np.mean(s))
@@ -187,10 +187,10 @@ print(indices)
 glyphs = []
 glyph_points = []
 
-glyphs = mlab.points3d(xdata, ydata, zdata, s_list,  color = (0.20,0.8,0.5), scale_factor=1)
+glyphs = mlab.points3d(xdata, ydata, zdata, s_list,  color = (0.20,0.8,0.5), scale_factor=0.2)
 
 focus = 0
-glyphs_red = mlab.points3d(xdata[focus], ydata[focus], zdata[focus], s_list[focus],  color = (1,0,0), scale_factor=1.1  )
+glyphs_red = mlab.points3d(xdata[focus], ydata[focus], zdata[focus], s_list[focus],  color = (1,0,0), scale_factor=0.2 )
 
     #glyph_points = glyphs.glyph.glyph_source.glyph_source.output.points.to_array()
 

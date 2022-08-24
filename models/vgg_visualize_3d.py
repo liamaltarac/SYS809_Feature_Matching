@@ -143,7 +143,7 @@ for i in range(num_channels):  # Each channel (ex R G B)
         f = filters[:,:,:, j]
         f = f[:,:, i]  
 
-        sym, anti = getSymAntiSym(normalizeToOne(f))
+        sym, anti = getSymAntiSym(f) # getSymAntiSym(normalizeToOne(f))
         sym_mag = np.linalg.norm(sym) 
         anti_mag = np.linalg.norm(anti) 
 

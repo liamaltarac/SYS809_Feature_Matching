@@ -34,8 +34,10 @@ from tensorflow.keras.applications import VGG16
 
 from mayavi  import mlab 
 
-LAYER =17
+LAYER = 15
 FILTER = 400
+CHANNEL = 300
+
 
 RGB = ['R','G','B']
 
@@ -121,14 +123,14 @@ a = np.array([])
 t = np.array([])
 
 fig.scene.disable_render = True 
-for i in range(FILTER, FILTER+1):  # each filter in that channel 
+for i in range(num_filters):  # each filter in that channel 
     #print("i = ", i)
 
     filter_list = []
     sym_list = []
     anti_list  = []
 
-    for j in range(num_channels): # Each channel (ex R G B)
+    for j in range(CHANNEL, CHANNEL + 1): # Each channel (ex R G B)
     
 
         #print(j)
@@ -151,9 +153,6 @@ for i in range(FILTER, FILTER+1):  # each filter in that channel
         filter_list.append(f)
         sym_list.append(sym)
         anti_list.append(anti)
-
-
-
 
 
 
@@ -237,7 +236,6 @@ def picker_callback(picker_obj):
             ax[2].set_title('Chanel : {} ({:5.3f})'.format(point_id, np.linalg.norm(anti_sym)))
 
             fig.show()
-
 
 picker = fig.on_mouse_pick(picker_callback)
 
