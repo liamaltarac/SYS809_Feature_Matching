@@ -11,7 +11,8 @@ from keras.layers import Conv2D, Dense, Flatten, MaxPool2D
 from keras.models import Sequential, load_model
 
 import matplotlib.pyplot as plt
-
+import cv2
+from skimage.transform import warp_polar, rotate, rescale
 
 import gc
 class SADecompLayer(Layer):
@@ -32,30 +33,24 @@ class SADecompLayer(Layer):
 
 
         patches = self.extract_patches(inputs) #, [1, self.k, self.k, 1],  [1, self.k, self.k, 1], rates = [1,1,1,1] , padding = 'VALID')
+        print(patches.shape)
         #patches = tf.reshape(patches, [1, self.k , self.k, 1])
-        
-        
+        #patches = tf.make_ndarray(patches.numpy())
+
+        r = np.sqrt(((patches.shape[1]/2.0)**2.0)+((patches.shape[2]/2.0)**2.0))
+        out =  warp_polar(patches, radius=r, scaling="log")
+        print(out.shape)
+        out  = tf.convert_to_tensor(out)
+
+        out = self.extract_patches_inverse(inputs, out)
         #print("PS : ", patches.shape)
         '''for patch in patches:
             print(patch.shape)
             plt.figure()
             plt.imshow(patch)'''
-        mat_flip_x = flip_left_right(patches)
 
-        mat_flip_y = flip_up_down(patches)
-        mat_flip_xy = flip_left_right(flip_up_down(patches))
-        sum = patches + mat_flip_x + mat_flip_y + mat_flip_xy
-        
-        mat_sum_rot_90 = rot90(sum)
-        #gc.collect()
-        #print("mat_sum_rot_90 shape " , mat_sum_rot_90.shape, self._name)
-        
-        #print("OUT SHAPE," , out.shape)
-        out = (sum + mat_sum_rot_90) / 8
-        
-        sym = self.extract_patches_inverse(inputs, out)
-        anti = inputs - sym
-        return  sym, anti #tf.concat([sym, anti], -1) #, inputs - sym # tf.reshape((sum + mat_sum_rot_90) / 8, (batch_size, height, width, n_filters))
+
+        return out #tf.concat([sym, anti], -1) #, inputs - sym # tf.reshape((sum + mat_sum_rot_90) / 8, (batch_size, height, width, n_filters))
 
 
     def extract_patches(self, x):
@@ -69,6 +64,9 @@ class SADecompLayer(Layer):
         # Divide by grad, to "average" together the overlapping patches
         # otherwise they would simply sum up
         return tf.gradients(_y, _x, grad_ys=y)[0] / grad
+
+
+
 
 if __name__ == "__main__":
     model = Sequential()

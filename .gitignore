@@ -167,3 +167,4 @@ cython_debug/
 
 .jpg
 /Caltech256
+/models/~/tensorflow_datasets/imagenette/
